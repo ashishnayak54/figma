@@ -4,12 +4,37 @@
  * SPDX-License-Identifier: BSD-3-Clause
  * For full license text, see the LICENSE file in the repo root or https://opensource.org/licenses/BSD-3-Clause
  */
+
+import figmaColors from './figma'
+
+// import figmaColors from './figma'
 const colors = {
     transparent: 'transparent',
     current: 'currentColor',
     black: '#000000',
     white: '#FFFFFF',
-
+    beige: '#FAEBD8',
+    globalBackgroundColor: figmaColors.figmaBackgroundColor,
+    globalTextColor: figmaColors.figmaTextColor,
+    promobannerBackground: figmaColors.promoBannerBackground,
+    headerBackground: figmaColors.headerBackground,
+    buttonBackground: figmaColors.buttonBackground,
+    buttonTextColor: figmaColors.buttonTextColor,
+    buttonHoverBackground: figmaColors.buttonHoverBackground,
+    buttonHoverTextColor: figmaColors.buttonHoverTextColor,
+    buttonDisabledBackground: figmaColors.buttonDisabledBackground,
+    footerBackground: figmaColors.footerBackground,
+    filterSectionBorderStyles: figmaColors.filterSectionBorderStyles,
+    linkTextColor: figmaColors.linkTextColor,
+    plpFilterSectionBackground: figmaColors.plpFilterSectionBackground,
+    breadCrumbColor: figmaColors.breadCrumbColor,
+    breadCrumbFontSize: figmaColors.breadCrumbFontSize,
+    breadCrumbFontWeight: figmaColors.breadCrumbFontWeight,
+    plpFilterHeadingColor: figmaColors.plpFilterHeadingColor,
+    plpFilterSubHeadingColor: figmaColors.plpFilterSubHeadingColor,
+    plpTileprodNameColor: figmaColors.plpTileprodNameColor,
+    plpTileprodPriceColor: figmaColors.plpTileprodPriceColor,
+    plpFilterContentColor: figmaColors.plpFilterContentColor,
     whiteAlpha: {
         50: 'rgba(255, 255, 255, 0.04)',
         100: 'rgba(255, 255, 255, 0.06)',

@@ -8,14 +8,17 @@ import React from 'react'
 import {screen} from '@testing-library/react'
 import user from '@testing-library/user-event'
 import {rest} from 'msw'
-import {renderWithProviders, createPathWithDefaults, setupMockServer} from '../../utils/test-utils'
+import {renderWithProviders, createPathWithDefaults} from '../../utils/test-utils'
 import Login from '.'
 import {BrowserRouter as Router, Route} from 'react-router-dom'
 import Account from '../account'
 import Registration from '../registration'
 import ResetPassword from '../reset-password'
+import mockConfig from '../../../config/mocks/default'
 
 jest.setTimeout(60000)
+
+jest.mock('../../commerce-api/einstein')
 
 const mockRegisteredCustomer = {
     authType: 'registered',
@@ -36,47 +39,12 @@ const mockMergedBasket = {
     }
 }
 
-jest.mock('commerce-sdk-isomorphic', () => {
-    const sdk = jest.requireActual('commerce-sdk-isomorphic')
-    return {
-        ...sdk,
-        ShopperCustomers: class ShopperCustomersMock extends sdk.ShopperCustomers {
-            async registerCustomer() {
-                return mockRegisteredCustomer
-            }
-
-            async getCustomer(args) {
-                if (args.parameters.customerId === 'customerid') {
-                    return {
-                        authType: 'guest',
-                        customerId: 'customerid'
-                    }
-                }
-                return mockRegisteredCustomer
-            }
-
-            async authorizeCustomer() {
-                return {
-                    headers: {
-                        get(key) {
-                            return {authorization: 'guestToken'}[key]
-                        }
-                    },
-                    json: async () => ({
-                        authType: 'guest',
-                        customerId: 'customerid'
-                    })
-                }
-            }
-        }
-    }
-})
-
 jest.mock('../../commerce-api/utils', () => {
     const originalModule = jest.requireActual('../../commerce-api/utils')
     return {
         ...originalModule,
-        isTokenValid: jest.fn().mockReturnValue(true),
+        isTokenExpired: jest.fn().mockReturnValue(false),
+        hasSFRAAuthStateChanged: jest.fn().mockReturnValue(false),
         createGetTokenBody: jest.fn().mockReturnValue({
             grantType: 'test',
             code: 'test',
@@ -114,32 +82,46 @@ const MockedComponent = () => {
     )
 }
 
-const server = setupMockServer()
-
 // Set up and clean up
 beforeEach(() => {
     jest.resetModules()
-    server.listen({
-        onUnhandledRequest: 'error'
-    })
+    global.server.use(
+        rest.post('*/customers', (req, res, ctx) => {
+            return res(ctx.delay(0), ctx.status(200), ctx.json(mockRegisteredCustomer))
+        }),
+        rest.get('*/customers/:customerId', (req, res, ctx) => {
+            const {customerId} = req.params
+            if (customerId === 'customerId') {
+                return res(
+                    ctx.delay(0),
+                    ctx.status(200),
+                    ctx.json({
+                        authType: 'guest',
+                        customerId: 'customerid'
+                    })
+                )
+            }
+            return res(ctx.delay(0), ctx.status(200), ctx.json(mockRegisteredCustomer))
+        })
+    )
 })
 afterEach(() => {
     localStorage.clear()
-    server.resetHandlers()
 })
-afterAll(() => server.close())
 
 test('Allows customer to sign in to their account', async () => {
-    server.use(
-        rest.get('*/customers/:customerId', (req, res, ctx) =>
-            res(ctx.delay(0), ctx.json({authType: 'registered', email: 'darek@test.com'}))
-        ),
+    global.server.use(
+        rest.get('*/customers/:customerId', (req, res, ctx) => {
+            return res(ctx.delay(0), ctx.json({authType: 'registered', email: 'darek@test.com'}))
+        }),
         rest.post('*/baskets/actions/merge', (req, res, ctx) => {
-            res(ctx.delay(0), ctx.json(mockMergedBasket))
+            return res(ctx.delay(0), ctx.json(mockMergedBasket))
         })
     )
     // render our test component
-    renderWithProviders(<MockedComponent />)
+    renderWithProviders(<MockedComponent />, {
+        wrapperProps: {siteAlias: 'uk', locale: {id: 'en-GB'}, appConfig: mockConfig.app}
+    })
 
     // enter credentials and submit
     user.type(screen.getByLabelText('Email'), 'darek@test.com')
@@ -153,14 +135,16 @@ test('Allows customer to sign in to their account', async () => {
 
 test('Renders error when given incorrect log in credentials', async () => {
     // mock failed auth request
-    server.use(
+    global.server.use(
         rest.post('*/oauth2/login', (req, res, ctx) =>
             res(ctx.delay(0), ctx.status(401), ctx.json({message: 'Invalid Credentials.'}))
         )
     )
 
     // render our test component
-    renderWithProviders(<MockedComponent />)
+    renderWithProviders(<MockedComponent />, {
+        wrapperProps: {siteAlias: 'uk', locale: {id: 'en-GB'}, appConfig: mockConfig.app}
+    })
 
     // enter credentials and submit
     user.type(screen.getByLabelText('Email'), 'foo@test.com')
@@ -179,7 +163,9 @@ test('Renders error when given incorrect log in credentials', async () => {
 
 test('should navigate to sign in page when the user clicks Create Account', async () => {
     // render our test component
-    renderWithProviders(<MockedComponent />)
+    renderWithProviders(<MockedComponent />, {
+        wrapperProps: {siteAlias: 'uk', locale: {id: 'en-GB'}, appConfig: mockConfig.app}
+    })
     user.click(screen.getByText(/Create Account/i))
 
     // wait for sign up page to appear
@@ -188,7 +174,9 @@ test('should navigate to sign in page when the user clicks Create Account', asyn
 
 test('should navigate to reset password page when the user clicks Forgot Password', async () => {
     // render our test component
-    renderWithProviders(<MockedComponent />)
+    renderWithProviders(<MockedComponent />, {
+        wrapperProps: {siteAlias: 'uk', locale: {id: 'en-GB'}, appConfig: mockConfig.app}
+    })
     user.click(screen.getByText(/forgot password/i))
 
     // wait for sign up page to appear

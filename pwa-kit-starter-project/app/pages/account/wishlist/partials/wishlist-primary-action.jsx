@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, salesforce.com, inc.
+ * Copyright (c) 2022, Salesforce, Inc.
  * All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
  * For full license text, see the LICENSE file in the repo root or https://opensource.org/licenses/BSD-3-Clause
@@ -7,11 +7,12 @@
 import React, {useState} from 'react'
 import {Button, useDisclosure} from '@chakra-ui/react'
 import useBasket from '../../../../commerce-api/hooks/useBasket'
-import {useIntl} from 'react-intl'
+import {FormattedMessage, useIntl} from 'react-intl'
 import {useItemVariant} from '../../../../components/item-variant'
 import ProductViewModal from '../../../../components/product-view-modal'
 import {useToast} from '../../../../hooks/use-toast'
 import {API_ERROR_MESSAGE} from '../../../../constants'
+import Link from '../../../../components/link'
 
 /**
  * Renders primary action on a product-item card in the form of a button.
@@ -23,18 +24,30 @@ const WishlistPrimaryAction = () => {
     const basket = useBasket()
     const {formatMessage} = useIntl()
     const isMasterProduct = variant?.type?.master || false
+    const isProductASet = variant?.type?.set
     const showToast = useToast()
     const [isLoading, setIsLoading] = useState(false)
     const {isOpen, onOpen, onClose} = useDisclosure()
+
     const handleAddToCart = async (item, quantity) => {
         setIsLoading(true)
-        const productItems = [
-            {
-                productId: item.id || item.productId,
-                price: item.price,
-                quantity
-            }
-        ]
+
+        const isAddingASet = Boolean(item.setProducts)
+
+        const productItems = isAddingASet
+            ? item.setProducts.map((child) => ({
+                  productId: child.id || child.productId,
+                  price: child.price,
+                  quantity
+              }))
+            : [
+                  {
+                      productId: item.id || item.productId,
+                      price: item.price,
+                      quantity
+                  }
+              ]
+
         try {
             await basket.addItemToBasket(productItems)
             showToast({
@@ -44,7 +57,7 @@ const WishlistPrimaryAction = () => {
                             '{quantity} {quantity, plural, one {item} other {items}} added to cart',
                         id: 'wishlist_primary_action.info.added_to_cart'
                     },
-                    {quantity: quantity}
+                    {quantity: isAddingASet ? quantity * item.setProducts.length : quantity}
                 ),
                 status: 'success'
             })
@@ -55,15 +68,68 @@ const WishlistPrimaryAction = () => {
                 status: 'error'
             })
         }
+
         setIsLoading(false)
     }
 
-    return (
-        <>
-            {isMasterProduct ? (
+    const buttonText = {
+        viewOptions: (
+            <FormattedMessage
+                defaultMessage="View Options"
+                id="wishlist_primary_action.button.view_options"
+            />
+        ),
+        viewFullDetails: (
+            <FormattedMessage
+                defaultMessage="View Full Details"
+                id="wishlist_primary_action.button.view_full_details"
+            />
+        ),
+        addToCart: (
+            <FormattedMessage
+                defaultMessage="Add to Cart"
+                id="wishlist_primary_action.button.add_to_cart"
+            />
+        ),
+        addSetToCart: (
+            <FormattedMessage
+                defaultMessage="Add Set to Cart"
+                id="wishlist_primary_action.button.add_set_to_cart"
+            />
+        )
+    }
+
+    if (isProductASet) {
+        if (variant.setProducts?.every((child) => !hasVariants(child))) {
+            return (
+                <Button
+                    variant={'solid'}
+                    onClick={() => handleAddToCart(variant, variant.quantity)}
+                    w={'full'}
+                    isLoading={isLoading}
+                >
+                    {buttonText.addSetToCart}
+                </Button>
+            )
+        } else {
+            return (
+                <Button
+                    as={Link}
+                    href={`/product/${variant.id}`}
+                    w={'full'}
+                    variant={'solid'}
+                    _hover={{textDecoration: 'none'}}
+                >
+                    {buttonText.viewFullDetails}
+                </Button>
+            )
+        }
+    } else {
+        if (isMasterProduct) {
+            return (
                 <>
                     <Button w={'full'} variant={'solid'} onClick={onOpen}>
-                        Select Options
+                        {buttonText.viewOptions}
                     </Button>
                     {isOpen && (
                         <ProductViewModal
@@ -75,18 +141,22 @@ const WishlistPrimaryAction = () => {
                         />
                     )}
                 </>
-            ) : (
+            )
+        } else {
+            return (
                 <Button
                     variant={'solid'}
                     onClick={() => handleAddToCart(variant, variant.quantity)}
                     w={'full'}
                     isLoading={isLoading}
                 >
-                    Add To Cart
+                    {buttonText.addToCart}
                 </Button>
-            )}
-        </>
-    )
+            )
+        }
+    }
 }
 
 export default WishlistPrimaryAction
+
+const hasVariants = (product) => Boolean(product?.variants)

@@ -1,11 +1,17 @@
 /*
- * Copyright (c) 2021, salesforce.com, inc.
+ * Copyright (c) 2022, Salesforce, Inc.
  * All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
  * For full license text, see the LICENSE file in the repo root or https://opensource.org/licenses/BSD-3-Clause
  */
 
 import {defineMessage} from 'react-intl'
+
+// Global app defaults
+export const DEFAULT_LOCALE = 'en-US'
+export const DEFAULT_SITE_TITLE = 'Retail React App'
+export const MAX_CACHE_AGE = 60 * 15 // 15 min
+
 // Constants used in the used for product searching.
 export const DEFAULT_SEARCH_PARAMS = {limit: 25, offset: 0, sort: 'best-matches', refine: []}
 export const DEFAULT_LIMIT_VALUES = [25, 50, 100] // Page sizes
@@ -18,6 +24,11 @@ export const RECENT_SEARCH_MIN_LENGTH = 3
 // Constants for the Homepage's Shop Products section.
 export const HOME_SHOP_PRODUCTS_CATEGORY_ID = 'newarrivals'
 export const HOME_SHOP_PRODUCTS_LIMIT = 10
+
+// Constants for menu
+export const CAT_MENU_DEFAULT_NAV_DEPTH = 1
+export const CAT_MENU_DEFAULT_ROOT_CATEGORY = 'root'
+export const CAT_MENU_STALE_TIME = 10000 // 10 seconds
 
 export const cssColorGroups = {
     beige: '#d3bca9',
@@ -59,4 +70,23 @@ export const urlPartPositions = {
     NONE: 'none'
 }
 
-export const DEFAULT_SITE_TITLE = 'Retail React App'
+// Toast messages exist outside the scope of the base IntlProvider. This means
+// that commonly used components that require localization cannot easily be
+// extracted into a hook/helper. However, we can still extract the message
+// definitions to a common location (here), so that each message is only defined
+// once.
+
+export const TOAST_MESSAGE_ADDED_TO_WISHLIST = defineMessage({
+    id: 'global.info.added_to_wishlist',
+    defaultMessage: '{quantity} {quantity, plural, one {item} other {items}} added to wishlist'
+})
+
+export const TOAST_ACTION_VIEW_WISHLIST = defineMessage({
+    defaultMessage: 'View',
+    id: 'global.link.added_to_wishlist.view_wishlist'
+})
+
+export const TOAST_MESSAGE_REMOVED_FROM_WISHLIST = defineMessage({
+    id: 'global.info.removed_from_wishlist',
+    defaultMessage: 'Item removed from wishlist'
+})

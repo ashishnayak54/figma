@@ -20,6 +20,16 @@ jest.mock('pwa-kit-runtime/utils/ssr-config', () => {
 const mockHistoryPush = jest.fn()
 const mockHistoryReplace = jest.fn()
 
+/**
+ * There's an open bug with jest on Node 18.16 that prevents modification of global objects.
+ * The issue has been fixed in Node 19 but is not yet back-ported to Node 18.x.
+ * TODO: Remove this property when the bugfix is available for Node 18.x.
+ */
+Object.defineProperty(window, 'location', {
+    writable: true,
+    value: global.window
+})
+
 jest.mock('react-router', () => {
     const original = jest.requireActual('react-router')
 
@@ -56,7 +66,9 @@ const TestComponent = () => {
 
 test('prepends locale and site and calls history.push', () => {
     getConfig.mockImplementation(() => mockConfig)
-    const {getByTestId} = renderWithProviders(<TestComponent />)
+    const {getByTestId} = renderWithProviders(<TestComponent />, {
+        wrapperProps: {siteAlias: 'uk', appConfig: mockConfig.app}
+    })
     user.click(getByTestId('page1-link'))
     expect(mockHistoryPush).toHaveBeenCalledWith('/uk/en-GB/page1')
 })
@@ -74,7 +86,9 @@ test('append locale as path and site as query and calls history.push', () => {
         }
     }
     getConfig.mockImplementation(() => newConfig)
-    const {getByTestId} = renderWithProviders(<TestComponent />)
+    const {getByTestId} = renderWithProviders(<TestComponent />, {
+        wrapperProps: {siteAlias: 'uk', appConfig: newConfig.app}
+    })
     user.click(getByTestId('page1-link'))
     expect(mockHistoryPush).toHaveBeenCalledWith('/en-GB/page1?site=uk')
 })
@@ -82,7 +96,9 @@ test('append locale as path and site as query and calls history.push', () => {
 test('works for any history method and args', () => {
     getConfig.mockImplementation(() => mockConfig)
 
-    const {getByTestId} = renderWithProviders(<TestComponent />)
+    const {getByTestId} = renderWithProviders(<TestComponent />, {
+        wrapperProps: {siteAlias: 'uk', appConfig: mockConfig.app}
+    })
 
     user.click(getByTestId('page2-link'))
     expect(mockHistoryReplace).toHaveBeenCalledWith('/uk/en-GB/page2', {})
@@ -91,7 +107,9 @@ test('works for any history method and args', () => {
 test('if given the path to root or homepage, will not prepend the locale', () => {
     getConfig.mockImplementation(() => mockConfig)
 
-    const {getByTestId} = renderWithProviders(<TestComponent />)
+    const {getByTestId} = renderWithProviders(<TestComponent />, {
+        wrapperProps: {siteAlias: 'us', locale: 'en-US'}
+    })
     user.click(getByTestId('page4-link'))
     expect(mockHistoryPush).toHaveBeenCalledWith('/')
 })

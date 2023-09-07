@@ -1,9 +1,10 @@
 /*
- * Copyright (c) 2021, salesforce.com, inc.
+ * Copyright (c) 2022, Salesforce, Inc.
  * All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
  * For full license text, see the LICENSE file in the repo root or https://opensource.org/licenses/BSD-3-Clause
  */
+
 import React, {useEffect, useRef, useState} from 'react'
 import PropTypes from 'prop-types'
 import {useIntl} from 'react-intl'
@@ -15,7 +16,12 @@ import useIntersectionObserver from '../../hooks/use-intersection-observer'
 import useWishlist from '../../hooks/use-wishlist'
 import {useToast} from '../../hooks/use-toast'
 import useNavigation from '../../hooks/use-navigation'
-import {API_ERROR_MESSAGE} from '../../constants'
+import {
+    API_ERROR_MESSAGE,
+    TOAST_ACTION_VIEW_WISHLIST,
+    TOAST_MESSAGE_ADDED_TO_WISHLIST,
+    TOAST_MESSAGE_REMOVED_FROM_WISHLIST
+} from '../../constants'
 
 /**
  * A component for fetching and rendering product recommendations from the Einstein API
@@ -47,9 +53,6 @@ const RecommendedProducts = ({zone, recommender, products, title, shouldFetch, .
             return
         }
 
-        // Create the expected args object for products when given
-        const args = {products: _products?.map((id) => ({id}))}
-
         // Check if the component should fetch results or not. This is useful
         // when you are still waiting on additional data, like `products`.
         if (typeof shouldFetch === 'function' && !shouldFetch()) {
@@ -59,11 +62,11 @@ const RecommendedProducts = ({zone, recommender, products, title, shouldFetch, .
         // Fetch either zone or recommender, but not both. If a zone and recommender
         // name are both provided, `zone` takes precendence.
         if (zone) {
-            getZoneRecommendations(zone, args)
+            getZoneRecommendations(zone, _products)
             return
         }
         if (recommender) {
-            getRecommendations(recommender, args)
+            getRecommendations(recommender, _products)
             return
         }
     }, [zone, recommender, _products, isInitialized])
@@ -110,8 +113,7 @@ const RecommendedProducts = ({zone, recommender, products, title, shouldFetch, .
         return null
     }
 
-    // TODO: DRY the wishlist handlers when intl
-    // provider is available globally
+    // TODO: DRY this handler when intl provider is available globally
     const addItemToWishlist = async (product) => {
         try {
             await wishlist.createListItem({
@@ -119,14 +121,7 @@ const RecommendedProducts = ({zone, recommender, products, title, shouldFetch, .
                 quantity: 1
             })
             toast({
-                title: formatMessage(
-                    {
-                        defaultMessage:
-                            '{quantity} {quantity, plural, one {item} other {items}} added to wishlist',
-                        id: 'recommended_products.info.added_to_wishlist'
-                    },
-                    {quantity: 1}
-                ),
+                title: formatMessage(TOAST_MESSAGE_ADDED_TO_WISHLIST, {quantity: 1}),
                 status: 'success',
                 action: (
                     // it would be better if we could use <Button as={Link}>
@@ -135,7 +130,7 @@ const RecommendedProducts = ({zone, recommender, products, title, shouldFetch, .
                     // and the toast doesn't have access to intl provider, which is a
                     // requirement of the Link component.
                     <Button variant="link" onClick={() => navigate('/account/wishlist')}>
-                        View
+                        {formatMessage(TOAST_ACTION_VIEW_WISHLIST)}
                     </Button>
                 )
             })
@@ -146,14 +141,13 @@ const RecommendedProducts = ({zone, recommender, products, title, shouldFetch, .
             })
         }
     }
+
+    // TODO: DRY this handler when intl provider is available globally
     const removeItemFromWishlist = async (product) => {
         try {
             await wishlist.removeListItemByProductId(product.productId)
             toast({
-                title: formatMessage({
-                    defaultMessage: 'Item removed from wishlist',
-                    id: 'recommended_products.info.removed_from_wishlist'
-                }),
+                title: formatMessage(TOAST_MESSAGE_REMOVED_FROM_WISHLIST),
                 status: 'success',
                 id: product.productId
             })
@@ -203,8 +197,8 @@ RecommendedProducts.propTypes = {
     /* The recommender to request */
     recommender: PropTypes.string,
 
-    /* The product IDs to use for recommendation context */
-    products: PropTypes.arrayOf(PropTypes.string),
+    /* The products to use for recommendation context */
+    products: PropTypes.arrayOf(PropTypes.object),
 
     /* Callback to determine if the component should fetch results */
     shouldFetch: PropTypes.func

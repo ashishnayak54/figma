@@ -25,8 +25,7 @@ const data = {
                 alt: 'Navy Single Pleat Wool Suit, Navy, swatch',
                 disBaseLink:
                     'https://edge.disstg.commercecloud.salesforce.com/dw/image/v2/ZZRF_001/on/demandware.static/-/Sites-apparel-m-catalog/default/dwad8e7f28/images/swatch/PG.52002RUBN4Q.NAVYWL.CP.jpg',
-                link:
-                    'https://zzrf-001.sandbox.us01.dx.commercecloud.salesforce.com/on/demandware.static/-/Sites-apparel-m-catalog/default/dwad8e7f28/images/swatch/PG.52002RUBN4Q.NAVYWL.CP.jpg',
+                link: 'https://zzrf-001.dx.commercecloud.salesforce.com/on/demandware.static/-/Sites-apparel-m-catalog/default/dwad8e7f28/images/swatch/PG.52002RUBN4Q.NAVYWL.CP.jpg',
                 title: 'Navy Single Pleat Wool Suit, Navy'
             }
         },
@@ -39,8 +38,7 @@ const data = {
                 alt: 'Long Sleeve Crew Neck, Grey Heather, swatch',
                 disBaseLink:
                     'https://edge.disstg.commercecloud.salesforce.com/dw/image/v2/ZZRF_001/on/demandware.static/-/Sites-apparel-m-catalog/default/dw3238595c/images/swatch/PG.10219685.JJ2XNXX.CP.jpg',
-                link:
-                    'https://zzrf-001.sandbox.us01.dx.commercecloud.salesforce.com/on/demandware.static/-/Sites-apparel-m-catalog/default/dw3238595c/images/swatch/PG.10219685.JJ2XNXX.CP.jpg',
+                link: 'https://zzrf-001.dx.commercecloud.salesforce.com/on/demandware.static/-/Sites-apparel-m-catalog/default/dw3238595c/images/swatch/PG.10219685.JJ2XNXX.CP.jpg',
                 title: 'Long Sleeve Crew Neck, Grey Heather'
             }
         },
@@ -53,8 +51,7 @@ const data = {
                 alt: 'Long Sleeve Crew Neck, Meadow Violet, swatch',
                 disBaseLink:
                     'https://edge.disstg.commercecloud.salesforce.com/dw/image/v2/ZZRF_001/on/demandware.static/-/Sites-apparel-m-catalog/default/dw7b40c85a/images/swatch/PG.10219685.JJ3HDXX.CP.jpg',
-                link:
-                    'https://zzrf-001.sandbox.us01.dx.commercecloud.salesforce.com/on/demandware.static/-/Sites-apparel-m-catalog/default/dw7b40c85a/images/swatch/PG.10219685.JJ3HDXX.CP.jpg',
+                link: 'https://zzrf-001.dx.commercecloud.salesforce.com/on/demandware.static/-/Sites-apparel-m-catalog/default/dw7b40c85a/images/swatch/PG.10219685.JJ3HDXX.CP.jpg',
                 title: 'Long Sleeve Crew Neck, Meadow Violet'
             }
         }
@@ -116,7 +113,7 @@ describe('Swatch Component', () => {
                 <Page />
             </Router>
         )
-        expect(screen.getAllByRole('link').length).toEqual(data.values.length)
+        expect(screen.getAllByRole('radio').length).toEqual(data.values.length)
     })
 
     test('swatch can be selected', () => {
@@ -129,8 +126,8 @@ describe('Swatch Component', () => {
             </Router>
         )
 
-        expect(screen.getAllByRole('link').length).toEqual(data.values.length)
-        const firstSwatch = screen.getAllByRole('link')[0]
+        expect(screen.getAllByRole('radio').length).toEqual(data.values.length)
+        const firstSwatch = screen.getAllByRole('radio')[0]
         fireEvent.click(firstSwatch)
         waitFor(() => {
             expect(history.search).toEqual('?color=BLACKFB')

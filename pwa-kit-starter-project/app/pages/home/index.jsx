@@ -1,13 +1,14 @@
 /*
- * Copyright (c) 2021, salesforce.com, inc.
+ * Copyright (c) 2022, Salesforce, Inc.
  * All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
  * For full license text, see the LICENSE file in the repo root or https://opensource.org/licenses/BSD-3-Clause
  */
 
-import React from 'react'
+import React, {useEffect} from 'react'
 import PropTypes from 'prop-types'
 import {useIntl, FormattedMessage} from 'react-intl'
+import {useLocation} from 'react-router-dom'
 
 // Components
 import {
@@ -33,8 +34,15 @@ import ProductScroller from '../../components/product-scroller'
 import {getAssetUrl} from 'pwa-kit-react-sdk/ssr/universal/utils'
 import {heroFeatures, features} from './data'
 
+//Hooks
+import useEinstein from '../../commerce-api/hooks/useEinstein'
+
 // Constants
-import {HOME_SHOP_PRODUCTS_CATEGORY_ID, HOME_SHOP_PRODUCTS_LIMIT} from '../../constants'
+import {
+    MAX_CACHE_AGE,
+    HOME_SHOP_PRODUCTS_CATEGORY_ID,
+    HOME_SHOP_PRODUCTS_LIMIT
+} from '../../constants'
 
 /**
  * This is the home page for Retail React App.
@@ -44,6 +52,13 @@ import {HOME_SHOP_PRODUCTS_CATEGORY_ID, HOME_SHOP_PRODUCTS_LIMIT} from '../../co
  */
 const Home = ({productSearchResult, isLoading}) => {
     const intl = useIntl()
+    const einstein = useEinstein()
+    const {pathname} = useLocation()
+
+    /**************** Einstein ****************/
+    useEffect(() => {
+        einstein.sendViewPage(pathname)
+    }, [])
 
     return (
         <Box data-testid="home-page" layerStyle="page">
@@ -238,14 +253,14 @@ const Home = ({productSearchResult, isLoading}) => {
                         <>
                             {intl.formatMessage({
                                 defaultMessage: 'Contact our support staff.',
-                                id: 'home.description.contact_our_staff'
+                                id: 'home.description.here_to_help'
                             })}
                         </>
                         <br />
                         <>
                             {intl.formatMessage({
                                 defaultMessage: 'They will get you to the right place.',
-                                id: 'home.description.get_you_to_the_right_place'
+                                id: 'home.description.here_to_help_line_2'
                             })}
                         </>
                     </>
@@ -274,10 +289,8 @@ Home.shouldGetProps = ({previousLocation, location}) =>
     !previousLocation || previousLocation.pathname !== location.pathname
 
 Home.getProps = async ({res, api}) => {
-    // Since the home page is static, it is safe to set max age to a high value
-    // we set it to a year here, but you can set the value that is suitable for your project
     if (res) {
-        res.set('Cache-Control', 'max-age=31536000')
+        res.set('Cache-Control', `max-age=${MAX_CACHE_AGE}`)
     }
 
     const productSearchResult = await api.shopperSearch.productSearch({

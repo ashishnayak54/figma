@@ -6,11 +6,11 @@
  */
 'use strict'
 
-const path = require('path')
-const {getRuntime} = require('pwa-kit-runtime/ssr/server/express')
-const {isRemote} = require('pwa-kit-runtime/utils/ssr-server')
-const {getConfig} = require('pwa-kit-runtime/utils/ssr-config')
-const helmet = require('helmet')
+import path from 'path'
+import {getRuntime} from 'pwa-kit-runtime/ssr/server/express'
+import {isRemote} from 'pwa-kit-runtime/utils/ssr-server'
+import {getConfig} from 'pwa-kit-runtime/utils/ssr-config'
+import helmet from 'helmet'
 
 const options = {
     // The build directory (an absolute path)
@@ -41,6 +41,7 @@ const {handler} = runtime.createHandler(options, (app) => {
                 directives: {
                     'img-src': ["'self'", '*.commercecloud.salesforce.com', 'data:'],
                     'script-src': ["'self'", "'unsafe-eval'", 'storage.googleapis.com'],
+                    'connect-src': ["'self'", 'api.cquotient.com'],
 
                     // Do not upgrade insecure requests for local development
                     'upgrade-insecure-requests': isRemote() ? [] : null
@@ -52,6 +53,9 @@ const {handler} = runtime.createHandler(options, (app) => {
 
     // Handle the redirect from SLAS as to avoid error
     app.get('/callback?*', (req, res) => {
+        // This endpoint does nothing and is not expected to change
+        // Thus we cache it for a year to maximize performance
+        res.set('Cache-Control', `max-age=31536000`)
         res.send()
     })
     app.get('/robots.txt', runtime.serveStaticFile('static/robots.txt'))
@@ -62,4 +66,4 @@ const {handler} = runtime.createHandler(options, (app) => {
 })
 // SSR requires that we export a single handler function called 'get', that
 // supports AWS use of the server that we created above.
-exports.get = handler
+export const get = handler
